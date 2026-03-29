@@ -7,6 +7,16 @@
 - Briefly describe your initial UML design.
 - What classes did you include, and what responsibilities did you assign to each?
 
+I have 4 classes namely: Owner, Pet, Schedule and CareTask. 
+Owner — represents the person using the app. The owner has lists of pets and manages tasks and schedules
+
+Pet — represents an individual pet. Responsible for storing pet details (name, species, breed, age) 
+
+CareTask — represents a single care task (e.g. feeding, grooming). Responsible for storing task details like category, priority, and due date, and checking if it's due today.
+
+Schedule — represents a pet's care plan. Responsible for holding a collection of CareTasks and managing them — adding, removing, completing, and filtering by upcoming or overdue.
+
+
 **b. Design changes**
 
 - Did your design change during implementation?
