@@ -14,6 +14,7 @@ class CareTask:
     is_completed: bool = False
     notes: str = ""
     task_id: str = field(default_factory=lambda: str(uuid4()))
+    recurrence: str = None  # "daily", "weekly", or None
 
     def reschedule(self, new_date: datetime):
         """Update the task's due date to new_date."""
@@ -44,9 +45,41 @@ class Schedule:
     reminders_enabled: bool = True
 
     def add_task(self, task: CareTask):
-        """Add a task to the schedule and assign it to this pet."""
+        """Add a task to the schedule and assign it to this pet.
+        Prints a warning if another task is already scheduled at the same time.
+        """
         task.assigned_pet = self.pet
+        warning = self._check_conflict(task)
+        if warning:
+            print(f"WARNING: {warning}")
         self.tasks.append(task)
+
+    def _check_conflict(self, new_task: CareTask) -> str:
+        """Return a warning string if new_task shares a due_date with an existing task, else empty string."""
+        pet_name = self.pet.name if self.pet else "Unknown"
+        conflict = next(
+            (t for t in self.tasks if t.due_date == new_task.due_date and not t.is_completed),
+            None
+        )
+        if conflict:
+            time_str = new_task.due_date.strftime("%b %d %I:%M %p")
+            return f"Conflict for {pet_name}: '{new_task.title}' and '{conflict.title}' are both scheduled at {time_str}."
+        return ""
+
+    def get_conflicts(self) -> list:
+        """Return a list of warning strings for all same-time conflicts in this schedule."""
+        pet_name = self.pet.name if self.pet else "Unknown"
+        by_time = {}
+        for task in self.tasks:
+            if not task.is_completed:
+                by_time.setdefault(task.due_date, []).append(task)
+        warnings = []
+        for due_date, group in by_time.items():
+            if len(group) > 1:
+                time_str = due_date.strftime("%b %d %I:%M %p")
+                titles = " and ".join(f"'{t.title}'" for t in group)
+                warnings.append(f"Conflict for {pet_name}: {titles} are both scheduled at {time_str}.")
+        return warnings
 
     def remove_task(self, task_id: str):
         """Remove a task from the schedule by its ID."""
@@ -69,12 +102,41 @@ class Schedule:
         ]
 
     def complete_task(self, task_id: str):
-        """Mark a task as completed by its ID, raising ValueError if not found."""
+        """Mark a task as completed by its ID, raising ValueError if not found.
+        If the task recurs daily or weekly, a new instance is scheduled automatically.
+        """
         for task in self.tasks:
             if task.task_id == task_id:
                 task.is_completed = True
+                if task.recurrence == "daily":
+                    next_due = task.due_date + timedelta(days=1)
+                elif task.recurrence == "weekly":
+                    next_due = task.due_date + timedelta(weeks=1)
+                else:
+                    return
+                next_task = CareTask(
+                    title=task.title,
+                    category=task.category,
+                    priority=task.priority,
+                    due_date=next_due,
+                    notes=task.notes,
+                    recurrence=task.recurrence,
+                )
+                self.add_task(next_task)
                 return
         raise ValueError(f"No task with id {task_id}")
+
+    def sort_by_time(self, reverse: bool = False) -> list:
+        """Return tasks sorted by due_date. Pass reverse=True for latest-first."""
+        return sorted(self.tasks, key=lambda t: t.due_date, reverse=reverse)
+
+    def filter_by_status(self, completed: bool) -> list:
+        """Return tasks matching the given completion status."""
+        return [t for t in self.tasks if t.is_completed == completed]
+
+    def filter_by_pet_name(self, name: str) -> list:
+        """Return tasks assigned to a pet with the given name (case-insensitive)."""
+        return [t for t in self.tasks if t.assigned_pet and t.assigned_pet.name.lower() == name.lower()]
 
 
 @dataclass
@@ -150,3 +212,29 @@ class Owner:
             if pet.pet_id == pet_id:
                 return pet.schedule
         raise ValueError(f"No pet with id {pet_id}")
+
+    def get_all_conflicts(self) -> list:
+        """Return warning strings for every same-time conflict across all pets."""
+        warnings = []
+        # Same-pet conflicts
+        for pet in self.pets:
+            warnings.extend(pet.schedule.get_conflicts())
+        # Cross-pet conflicts: tasks from different pets at the same time
+        all_tasks = self.get_all_tasks()
+        seen = {}
+        for task in all_tasks:
+            if task.is_completed:
+                continue
+            key = task.due_date
+            pet_name = task.assigned_pet.name if task.assigned_pet else "Unknown"
+            if key in seen:
+                existing_pet, existing_title = seen[key]
+                if existing_pet != pet_name:
+                    time_str = task.due_date.strftime("%b %d %I:%M %p")
+                    warnings.append(
+                        f"Cross-pet conflict at {time_str}: '{existing_title}' ({existing_pet}) "
+                        f"and '{task.title}' ({pet_name})."
+                    )
+            else:
+                seen[key] = (pet_name, task.title)
+        return warnings

@@ -23,7 +23,6 @@ Schedule — represents a pet's care plan. Responsible for holding a collection 
 - If yes, describe at least one change and why you made it.
 
 Owner.get_tasks_for_pet() and Owner.get_pet_schedule() both search by pet_name string so if two pets have the same name, both methods return ambiguous results. I added a pet id. 
-
 There was no way to create a Pet with a Schedule already initialized so the Schedule has to be attached after construction, which is easy to forget.
 ---
 
@@ -33,12 +32,16 @@ There was no way to create a Pet with a Schedule already initialized so the Sche
 
 - What constraints does your scheduler consider (for example: time, priority, preferences)?
 - How did you decide which constraints mattered most?
+Time — the primary constraint. Every CareTask has a due_date, conflict detection is purely time-based, and sort_by_time() organizes the whole schedule around it.
+Completion status — tasks are either pending or done. The scheduler skips completed tasks in conflict checks, upcoming/overdue queries, and filters.
+Time was chosen first because it's the only constraint that's objective — two things either happen at the same time or they don't. Priority and duration require judgment calls (how long is a walk? what overrides what?) that would need product decisions before they could be enforced.
 
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
 - Why is that tradeoff reasonable for this scenario?
-
+Completed tasks are never removed, they are only flagged 
+is_completed = True keeps tasks in the list forever. This keeps history but means every filter and conflict scan has to skip completed tasks explicitly. 
 ---
 
 ## 3. AI Collaboration

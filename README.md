@@ -41,3 +41,16 @@ pip install -r requirements.txt
 5. Add tests to verify key behaviors.
 6. Connect your logic to the Streamlit UI in `app.py`.
 7. Refine UML so it matches what you actually built.
+
+## Smarter Scheduling
+
+The scheduling system was extended beyond basic task tracking with three algorithmic features:
+
+### Recurring Tasks
+Tasks can be marked as `"daily"` or `"weekly"` via the `recurrence` field on `CareTask`. When `complete_task()` is called on a recurring task, the system automatically creates the next occurrence with the due date shifted forward by one day or one week respectively. This means a recurring feeding or medication task never needs to be manually re-added.
+
+### Conflict Detection
+When a task is added to a `Schedule`, `_check_conflict()` checks whether any existing incomplete task shares the same `due_date`. If a conflict is found, a warning is printed immediately. `get_conflicts()` performs a full scan of a single pet's schedule and returns all conflicts at once. At the owner level, `get_all_conflicts()` goes further — it detects both same-pet conflicts and cross-pet conflicts, catching cases where two different pets have tasks scheduled at the exact same time.
+
+### Sorting and Filtering
+`sort_by_time()` returns tasks ordered by `due_date`, with an optional `reverse` flag for latest-first ordering. `filter_by_status()` returns tasks matching a given completion state (pending or done). `filter_by_pet_name()` returns tasks assigned to a specific pet by name (case-insensitive), useful when viewing a shared schedule across multiple pets.
