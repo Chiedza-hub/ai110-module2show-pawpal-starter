@@ -54,3 +54,31 @@ When a task is added to a `Schedule`, `_check_conflict()` checks whether any exi
 
 ### Sorting and Filtering
 `sort_by_time()` returns tasks ordered by `due_date`, with an optional `reverse` flag for latest-first ordering. `filter_by_status()` returns tasks matching a given completion state (pending or done). `filter_by_pet_name()` returns tasks assigned to a specific pet by name (case-insensitive), useful when viewing a shared schedule across multiple pets.
+
+## Testing PawPal+
+
+### Running the tests
+
+```bash
+# Activate your virtual environment first
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+
+python -m pytest test_pawpal.py -v
+```
+
+### What the tests cover
+
+The test suite (`test_pawpal.py`) contains **15 tests** across four areas:
+
+| Area | Tests | What is verified |
+|---|---|---|
+| **Core behavior** | 5 | Task completion, adding tasks, overdue detection, owner pet management |
+| **Sorting** | 4 | Chronological order, reverse order, non-mutation of original list, empty schedule |
+| **Recurrence** | 3 | Daily task auto-creates next occurrence, new task inherits all fields with a fresh ID, non-recurring tasks don't spawn duplicates |
+| **Conflict detection** | 3 | Same-time tasks on the same pet trigger a conflict, different-time tasks do not, empty schedule returns no conflicts |
+
+### Confidence Level
+
+**★★★★☆ (4 / 5)**
+
+The core scheduling behaviors — task completion, recurrence, sorting, and same-pet conflict detection — are well covered and all 15 tests pass. The remaining gap is cross-pet conflict detection and owner-level edge cases (e.g., owner with no pets, invalid pet IDs), which are not yet tested. Adding coverage for those scenarios would push this to a full 5 stars.
