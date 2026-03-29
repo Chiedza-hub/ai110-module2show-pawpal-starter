@@ -1,16 +1,19 @@
+from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
+from uuid import uuid4
 
 
 @dataclass
 class CareTask:
-    task_id: str
     title: str
     category: str
     priority: str
+    assigned_pet: Pet = None
     due_date: datetime = field(default_factory=datetime.now)
     is_completed: bool = False
     notes: str = ""
+    task_id: str = field(default_factory=lambda: str(uuid4()))
 
     def reschedule(self, new_date: datetime):
         pass
@@ -24,7 +27,7 @@ class CareTask:
 
 @dataclass
 class Schedule:
-    pet_name: str
+    pet: Pet = None
     tasks: list = field(default_factory=list)
     reminders_enabled: bool = True
 
@@ -50,8 +53,13 @@ class Pet:
     species: str
     breed: str
     age: int
+    pet_id: str = field(default_factory=lambda: str(uuid4()))
     medications: list = field(default_factory=list)
-    schedule: Schedule = None
+    schedule: Schedule = field(default=None)
+
+    def __post_init__(self):
+        if self.schedule is None:
+            self.schedule = Schedule(pet=self)
 
     def get_active_tasks(self) -> list:
         pass
@@ -76,20 +84,21 @@ class Owner:
     def add_pet(self, pet: Pet):
         pass
 
-    def remove_pet(self, pet_name: str):
+    def remove_pet(self, pet_id: str):
         pass
 
     def get_all_pets(self) -> list:
         pass
 
     def get_all_tasks(self) -> list:
-        pass
+        return [task for pet in self.pets for task in pet.schedule.tasks]
 
     def get_todays_schedule(self) -> list:
+        today = datetime.today().date()
+        return [t for t in self.get_all_tasks() if t.due_date.date() == today]
+
+    def get_tasks_for_pet(self, pet_id: str) -> list:
         pass
 
-    def get_tasks_for_pet(self, pet_name: str) -> list:
-        pass
-
-    def get_pet_schedule(self, pet_name: str) -> Schedule:
+    def get_pet_schedule(self, pet_id: str) -> Schedule:
         pass

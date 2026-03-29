@@ -22,6 +22,9 @@ Schedule — represents a pet's care plan. Responsible for holding a collection 
 - Did your design change during implementation?
 - If yes, describe at least one change and why you made it.
 
+Owner.get_tasks_for_pet() and Owner.get_pet_schedule() both search by pet_name string so if two pets have the same name, both methods return ambiguous results. I added a pet id. 
+
+There was no way to create a Pet with a Schedule already initialized so the Schedule has to be attached after construction, which is easy to forget.
 ---
 
 ## 2. Scheduling Logic and Tradeoffs
