@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 from datetime import datetime
 from pawpal_system import Owner, Pet, CareTask, Schedule
@@ -5,6 +6,13 @@ from pawpal_system import Owner, Pet, CareTask, Schedule
 st.set_page_config(page_title="PawPal+", page_icon="🐾", layout="centered")
 
 st.title("🐾 PawPal+")
+
+DATA_FILE = "data.json"
+
+# Load persisted data on first run
+if "owner" not in st.session_state:
+    if os.path.exists(DATA_FILE):
+        st.session_state.owner = Owner.load_from_json(DATA_FILE)
 
 st.divider()
 
@@ -26,6 +34,7 @@ if st.button("Add Pet"):
     else:
         pet = Pet(name=pet_name, species=species, breed="Unknown", age=0)
         owner.add_pet(pet)
+        owner.save_to_json(DATA_FILE)
         st.success(f"Added {pet_name} to {owner_name}'s pets.")
 
 if "owner" in st.session_state and st.session_state.owner.pets:
@@ -69,6 +78,7 @@ if "owner" in st.session_state and st.session_state.owner.pets:
             recurrence=None if recurrence == "none" else recurrence,
         )
         selected_pet.schedule.add_task(task)
+        owner.save_to_json(DATA_FILE)
 
         # Check for conflicts immediately after adding
         conflicts = selected_pet.schedule.get_conflicts()

@@ -2,6 +2,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from uuid import uuid4
+import json
+import os
 
 
 @dataclass
@@ -212,6 +214,71 @@ class Owner:
             if pet.pet_id == pet_id:
                 return pet.schedule
         raise ValueError(f"No pet with id {pet_id}")
+
+    def save_to_json(self, filepath: str = "data.json"):
+        """Serialize the owner, their pets, and all tasks to a JSON file."""
+        data = {
+            "name": self.name,
+            "email": self.email,
+            "phone": self.phone,
+            "pets": [
+                {
+                    "name": pet.name,
+                    "species": pet.species,
+                    "breed": pet.breed,
+                    "age": pet.age,
+                    "pet_id": pet.pet_id,
+                    "medications": pet.medications,
+                    "tasks": [
+                        {
+                            "task_id": t.task_id,
+                            "title": t.title,
+                            "category": t.category,
+                            "priority": t.priority,
+                            "due_date": t.due_date.isoformat(),
+                            "is_completed": t.is_completed,
+                            "notes": t.notes,
+                            "recurrence": t.recurrence,
+                        }
+                        for t in pet.schedule.tasks
+                    ],
+                }
+                for pet in self.pets
+            ],
+        }
+        with open(filepath, "w") as f:
+            json.dump(data, f, indent=2)
+
+    @classmethod
+    def load_from_json(cls, filepath: str = "data.json") -> Owner:
+        """Load an Owner and all associated pets and tasks from a JSON file."""
+        with open(filepath, "r") as f:
+            data = json.load(f)
+        owner = cls(name=data["name"], email=data.get("email", ""), phone=data.get("phone", ""))
+        for pet_data in data.get("pets", []):
+            pet = Pet(
+                name=pet_data["name"],
+                species=pet_data["species"],
+                breed=pet_data["breed"],
+                age=pet_data["age"],
+                pet_id=pet_data["pet_id"],
+                medications=pet_data.get("medications", []),
+            )
+            for t in pet_data.get("tasks", []):
+                task = CareTask(
+                    task_id=t["task_id"],
+                    title=t["title"],
+                    category=t["category"],
+                    priority=t["priority"],
+                    due_date=datetime.fromisoformat(t["due_date"]),
+                    is_completed=t["is_completed"],
+                    notes=t.get("notes", ""),
+                    recurrence=t.get("recurrence"),
+                )
+                task.assigned_pet = pet
+                pet.schedule.tasks.append(task)
+            owner.add_pet(pet)
+        return owner
 
     def get_all_conflicts(self) -> list:
         """Return warning strings for every same-time conflict across all pets."""
