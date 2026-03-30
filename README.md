@@ -12,15 +12,6 @@ A busy pet owner needs help staying consistent with pet care. They want an assis
 
 Your job is to design the system first (UML), then implement the logic in Python, then connect it to the Streamlit UI.
 
-## What you will build
-
-Your final app should:
-
-- Let a user enter basic owner + pet info
-- Let a user add/edit tasks (duration + priority at minimum)
-- Generate a daily schedule/plan based on constraints and priorities
-- Display the plan clearly (and ideally explain the reasoning)
-- Include tests for the most important scheduling behaviors
 
 ## Getting started
 
@@ -32,15 +23,24 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### Suggested workflow
 
-1. Read the scenario carefully and identify requirements and edge cases.
-2. Draft a UML diagram (classes, attributes, methods, relationships).
-3. Convert UML into Python class stubs (no logic yet).
-4. Implement scheduling logic in small increments.
-5. Add tests to verify key behaviors.
-6. Connect your logic to the Streamlit UI in `app.py`.
-7. Refine UML so it matches what you actually built.
+
+## Features
+
+- **Multi-pet support** — an owner can manage any number of pets, each with their own independent schedule
+- **Task scheduling** — tasks have a title, category, priority, due date, and optional notes; each task is assigned a unique ID automatically
+- **Sorting by time** — schedules can be displayed in chronological or reverse-chronological order without modifying the underlying task list
+- **Daily recurrence** — tasks marked `"daily"` automatically generate the next occurrence when completed, shifted forward by one day
+- **Weekly recurrence** — tasks marked `"weekly"` auto-schedule the next occurrence one week ahead on completion
+- **Conflict warnings** — adding a task that overlaps in time with an existing task immediately triggers a warning; a full conflict scan is also available
+- **Cross-pet conflict detection** — the owner-level scanner catches cases where two different pets have tasks at the exact same time
+- **Overdue detection** — incomplete tasks past their due date can be retrieved for any pet's schedule
+- **Upcoming task filtering** — tasks due within the next N days can be queried across a pet's schedule
+- **Filter by completion status** — a schedule can be filtered to show only pending or only completed tasks
+- **Filter by pet name** — tasks can be filtered by the name of the assigned pet, useful for shared schedule views
+- **Task history** — completed tasks are retained and queryable separately from active tasks
+- **Medication tracking** — each pet maintains a list of medications that can be added or removed
+- **Streamlit UI** — a web interface lets the owner add pets, schedule tasks with recurrence and due times, and view today's schedule with conflict alerts
 
 ## Smarter Scheduling
 
@@ -79,6 +79,12 @@ The test suite (`test_pawpal.py`) contains **15 tests** across four areas:
 
 ### Confidence Level
 
-**★★★★☆ (4 / 5)**
+**★★★★☆ (3 / 5)**
 
-The core scheduling behaviors — task completion, recurrence, sorting, and same-pet conflict detection — are well covered and all 15 tests pass. The remaining gap is cross-pet conflict detection and owner-level edge cases (e.g., owner with no pets, invalid pet IDs), which are not yet tested. Adding coverage for those scenarios would push this to a full 5 stars.
+The core scheduling behaviors — task completion, recurrence, sorting, and same-pet conflict detection — are well covered and all 15 tests pass. The remaining gap is cross-pet conflict detection and owner-level edge cases (e.g., owner with no pets, invalid pet IDs), which are not yet tested. 
+
+## 📸 Demo
+
+<a href="uml_final.png" target="_blank">
+  <img src='uml_final.png' title='PawPal App' width='' alt='PawPal App' class='center-block' />
+</a>
